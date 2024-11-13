@@ -1,0 +1,33 @@
+zerops:
+  - setup: app
+    build:
+      os: alpine
+      base: nodejs@18
+      buildCommands:
+        - wget -O - https://github.com/blinko-space/blinko/archive/refs/tags/v0.2.8.tar.gz | tar -xzf -
+        - cd blinko-0.2.8; pnpm install
+        - cd blinko-0.2.8; pnpm build
+      deployFiles:
+        - blinko-0.2.8/~
+    deploy:
+      readinessCheck:
+        httpGet:
+          host: localhost
+          port: 1111
+          path: /
+          scheme: http
+    run:
+      base: nodejs@18
+      envVariables:
+        NODE_ENV: production
+        NEXTAUTH_URL: ${zeropsSubdomain}
+        NEXT_PUBLIC_BASE_URL: ${zeropsSubdomain}
+        DATABASE_URL: postgresql://${db_user}:${db_password}@db:5432/db
+      ports:
+        - httpSupport: true
+          port: 1111
+
+      initCommands:
+        - pnpm migrate
+        - pnpm db-seed
+      start: pnpm start
